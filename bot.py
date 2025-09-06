@@ -9,16 +9,20 @@ from collections import deque
 load_dotenv()
 
 # Bot setup
+DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', None)
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # API configuration
-API_URL = "https://ai.pentogang.com/api/chat/completions"
+API_URL = os.getenv('API_URL', None)
 API_KEY = os.getenv('API_KEY', None)
+MODEL = os.getenv('MODEL', None)
+MAX_TOKENS = int(os.getenv('MAX_TOKENS', 500))
+MAX_HISTORY_LENGTH = int(os.getenv('MAX_HISTORY_LENGTH', 100))
 
 # Message history
-message_history = deque(maxlen=100)
+message_history = deque(maxlen=MAX_HISTORY_LENGTH)
 
 @bot.event
 async def on_ready():
@@ -86,9 +90,9 @@ async def on_message(message):
                 messages_payload = list(message_history)
                 
                 payload = {
-                    "model": "discord-bot:120b",
+                    "model": MODEL,
                     "messages": messages_payload,
-                    "max_tokens": 500
+                    "max_tokens": MAX_TOKENS
                 }
                 
                 async with aiohttp.ClientSession() as session:
@@ -108,4 +112,4 @@ async def on_message(message):
                 await message.reply(f"Sorry, I encountered an error: {str(e)}")
 if __name__ == "__main__":
     # Run the bot with the token from environment variables
-    bot.run(os.getenv('DISCORD_BOT_TOKEN'))
+    bot.run(DISCORD_BOT_TOKEN)
