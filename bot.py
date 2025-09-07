@@ -4,6 +4,10 @@ from discord.ext import commands
 import aiohttp
 from dotenv import load_dotenv
 from collections import deque
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 load_dotenv()
 
@@ -46,32 +50,32 @@ async def fetch_model_tools():
                     model_data = await response.json()
                     tool_ids = model_data.get('meta', {}).get('toolIds', [])
                     if not tool_ids:
-                        print("No tools associated with this model.")
+                        logging.info("No tools associated with this model.")
                         available_tools = []
                         return
                     available_tools = [tool for tool in tool_ids]
-                    print(f"Total tools fetched: {len(available_tools)}")
+                    logging.info(f"Total tools fetched: {len(available_tools)}")
                 else:
-                    print(f"Failed to fetch model info: {response.status} - {await response.text()}")
+                    logging.error(f"Failed to fetch model info: {response.status} - {await response.text()}")
                     available_tools = []
     except Exception as e:
-        print(f"Error fetching model or tools: {str(e)}")
+        logging.error(f"Error fetching model or tools: {str(e)}")
         available_tools = []
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
+    logging.info(f'{bot.user} has connected to Discord!')
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="mentions"))
     
     # Fetch tools dynamically at startup
     await fetch_model_tools()
-    print(f"Available tools: {available_tools}")
+    logging.info(f"Available tools: {available_tools}")
     
     try:
         synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} command(s)")
+        logging.info(f"Synced {len(synced)} command(s)")
     except Exception as e:
-        print(f"Failed to sync commands: {e}")
+        logging.error(f"Failed to sync commands: {e}")
 
 last_processed_message = None
 
@@ -113,7 +117,7 @@ async def on_message(message):
             
         async with message.channel.typing():
             try:
-                print(f"Processing message: {content}")
+                logging.info(f"Processing message: {content}")
                 
                 # Add user message to history
                 message_history.append({"role": "user", "name": message.author.name, "content": content})
